@@ -15,7 +15,7 @@ Loading the dataset called refine_Sheet1.csv into a variable RefineSheet.
 
 Save the data set as a CSV file called refine_original.csv and load it in RStudio into a data frame.
 
-``` RefineSheet <- read.csv("refine_Sheet1.csv", header = T)```
+```RefineSheet <- read.csv("refine_Sheet1.csv", header = T)```
 
 1: Clean up brand names
 Clean up the 'company' column, so all of the misspellings of the brand names are standardized. For example, you can transform the values in the column to be: philips, akzo, van houten and unilever (all lowercase).
@@ -37,18 +37,26 @@ I then changed the classification from factor to character:
 I then used the agrep function to evaluate the names in company and change them to the appropriate names (philips, akzo, van houten, and unilever)
 
 ```RefineSheet$company [agrep("^philips", RefineSheet$company, max.distance=0.5)] <- "philips"
+
 RefineSheet$company [agrep("^akzo", RefineSheet$company, max.distance=0.3)] <- "akzo"
+
 RefineSheet$company [agrep("^van", RefineSheet$company, max.distance=0.5)] <- "van houten"
+
 RefineSheet$company [agrep("^unilever", RefineSheet$company, max.distance=0.5)] <- "unilever"
-print(RefineSheet$company)```
+
+RefineSheet$company <- tolower(RefineSheet$company)```
 
 2: Separate product code and number
 Separate the product code and product number into separate columns i.e. add two new columns called product_code and product_number, containing the product code and number respectively
 
 ```library(plyr)
 list <- RefineSheet$Product.code...number
+
 split.list <- strsplit(as.character(list), "-")
-RefineSheet [c("Product_Code", "Product_Number")] <- ldply(split.list)```
+
+RefineSheet [c("Product_Code", "Number")] <- ldply(split.list)
+
+print(RefineSheet)```
 
 3: Add product categories
 You learn that the product codes actually represent the following product categories:
@@ -57,14 +65,32 @@ v = TV
 x = Laptop
 q = Tablet
 In order to make the data more readable, add a column with the product category for each record.
+
+```mut1 <- RefineSheet$Product_Code=="p"
+RefineSheet[mut1, "Product_Name"] <- "Smartphone"
+
+mut1 <- RefineSheet$Product_Code=="v"
+RefineSheet[mut1, "Product_Name"] <- "TV"
+
+mut1 <- RefineSheet$Product_Code=="x"
+RefineSheet[mut1, "Product_Name"] <- "Laptop"
+
+mut1 <- RefineSheet$Product_Code=="q"
+RefineSheet[mut1, "Product_Name"] <- "Tablet"```
+
 4: Add full address for geocoding
 You'd like to view the customer information on a map. In order to do that, the addresses need to be in a form that can be easily geocoded. Create a new column full_address that concatenates the three address fields (address, city, country), separated by commas.
+
+```RefineSheet <- unite(RefineSheet, "full_address", address, city, country, sep = "," )```
  
 5: Create dummy variables for company and product category
 Both the company name and product category are categorical variables i.e. they take only a fixed set of values. In order to use them in further analysis you need to create dummy variables. Create dummy binary variables for each of them with the prefix company_ and product_ i.e.
 Add four binary (1 or 0) columns for company: company_philips, company_akzo, company_van_houten and company_unilever
 Add four binary (1 or 0) columns for product category: product_smartphone, product_tv, product_laptop and product_tablet
 
+```RefineSheet [c("company_philips", "company_akzo", "company_van_houten", "company_unilever")] <- NA
+
+RefineSheet [c("product_smartphone", "product_tv", "product_laptop", "product_tablet")] <- NA```
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
